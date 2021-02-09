@@ -177,7 +177,7 @@
       </sensor>
 	  </gazebo>
 
-	  <gazebo>
+    <gazebo>
       <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
         <update_rate>10</update_rate>
         <left_joint>wheel_left_joint</left_joint>
