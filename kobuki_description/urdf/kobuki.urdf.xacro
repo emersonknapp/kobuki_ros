@@ -221,7 +221,7 @@
     </link>
 
     <joint name="ir_receiver_left_joint" type="fixed">
-      <origin xyz="0.1048 0.135 0.0725" rpy="${-M_PI/2} 0 0" />
+      <origin xyz="0.1048 0.135 0.0725" rpy="0 0 ${M_PI/2}" />
       <parent link="base_link" />
       <child link="ir_receiver_left_link" />
     </joint>
@@ -236,7 +236,7 @@
     </link>
 
     <joint name="ir_receiver_center_joint" type="fixed">
-      <origin xyz="0.165 0.00 0.0725" rpy="0 ${M_PI/2} 0" />
+      <origin xyz="0.165 0.00 0.0725" rpy="0 0 0" />
       <parent link="base_link" />
       <child link="ir_receiver_center_link" />
     </joint>
@@ -251,7 +251,7 @@
     </link>
 
     <joint name="ir_receiver_right_joint" type="fixed">
-      <origin xyz="0.1048 -0.135 0.0725" rpy="${M_PI/2} 0 0" />
+      <origin xyz="0.1048 -0.135 0.0725" rpy="0 0 -${M_PI/2}" />
       <parent link="base_link" />
       <child link="ir_receiver_right_link" />
     </joint>
