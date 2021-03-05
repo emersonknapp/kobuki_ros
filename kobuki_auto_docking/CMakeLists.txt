@@ -1,43 +1,42 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(kobuki_auto_docking)
-find_package(catkin REQUIRED COMPONENTS roscpp rospy nodelet pluginlib message_filters actionlib kdl_conversions
-                                        ecl_threads ecl_geometry ecl_linear_algebra kobuki_msgs kobuki_dock_drive nav_msgs)
 
-catkin_package(
-   INCLUDE_DIRS include
-   LIBRARIES kobuki_auto_docking_ros kobuki_auto_docking_nodelet
-   CATKIN_DEPENDS roscpp rospy nodelet pluginlib message_filters actionlib kdl_conversions
-                  ecl_threads ecl_geometry ecl_linear_algebra kobuki_msgs kobuki_dock_drive nav_msgs
+find_package(ament_cmake REQUIRED)
+find_package(ecl_linear_algebra REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(kobuki_core REQUIRED)
+find_package(kobuki_ros_interfaces REQUIRED)
+find_package(message_filters REQUIRED)
+find_package(orocos_kdl REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(tf2_kdl REQUIRED)
+
+add_library(kobuki_auto_docking_ros SHARED
+  src/auto_docking_ros.cpp)
+target_include_directories(kobuki_auto_docking_ros PUBLIC
+  include/)
+ament_target_dependencies(kobuki_auto_docking_ros
+  ecl_linear_algebra
+  geometry_msgs
+  kobuki_core
+  kobuki_ros_interfaces
+  message_filters
+  orocos_kdl
+  rclcpp
+  rclcpp_components
+  tf2_kdl
 )
 
-include_directories(include
-                    ${catkin_INCLUDE_DIRS})
+rclcpp_components_register_nodes(kobuki_auto_docking_ros
+  "kobuki::AutoDockingROS")
 
-add_library(kobuki_auto_docking_ros src/auto_docking_ros.cpp)
-add_library(kobuki_auto_docking_nodelet src/nodelet.cpp)
+install(TARGETS kobuki_auto_docking_ros
+  DESTINATION lib/${project_name})
 
-add_dependencies(kobuki_auto_docking_ros ${catkin_EXPORTED_TARGETS})
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
-target_link_libraries(kobuki_auto_docking_ros ${catkin_LIBRARIES})
-target_link_libraries(kobuki_auto_docking_nodelet ${catkin_LIBRARIES} kobuki_auto_docking_ros)
-
-install(TARGETS kobuki_auto_docking_ros kobuki_auto_docking_nodelet
-        DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-)
-install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-install(DIRECTORY plugins
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-install(DIRECTORY launch
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-install(DIRECTORY param
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-install(PROGRAMS scripts/DockDriveActionClient.py
-                 scripts/DockDriveControl.py
-                 scripts/getDockIR.py
-        DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+ament_package()
