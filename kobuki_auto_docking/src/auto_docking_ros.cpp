@@ -19,7 +19,7 @@ namespace kobuki
 
 typedef message_filters::sync_policies::ApproximateTime<
   nav_msgs::msg::Odometry,
-  kobuki_ros_interfaces::msg::SensorState,
+  // kobuki_ros_interfaces::msg::SensorState,
   kobuki_ros_interfaces::msg::DockInfraRed
 > SyncPolicy;
 
@@ -31,34 +31,35 @@ public:
     : rclcpp::Node("auto_docking_ros", options)
   {
     RCLCPP_WARN(get_logger(), "Started autodock node");
-    double min_abs_v, min_abs_w;
-//   if (nh.getParam("min_abs_v", min_abs_v) == true)
-//     dock_.setMinAbsV(min_abs_v);
-//
-//   if (nh.getParam("min_abs_w", min_abs_w) == true)
-//     dock_.setMinAbsW(min_abs_w);
+    double min_abs_v = 0.01;
+    double min_abs_w = 0.1;
+    // if (nh.getParam("min_abs_v", min_abs_v) == true)
+    dock_.setMinAbsV(min_abs_v);
+    // if (nh.getParam("min_abs_w", min_abs_w) == true)
+    dock_.setMinAbsW(min_abs_w);
+
     cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>(
-      "cmd_vel", 10);
+      "/simulation/cmd_vel", 10);
 
     odom_sub_ = std::make_unique<message_filters::Subscriber<nav_msgs::msg::Odometry>>(
-      this, "odom");
+      this, "/simulation/odom", rmw_qos_profile_sensor_data);
     ir_sub_ = std::make_unique<
-      message_filters::Subscriber<kobuki_ros_interfaces::msg::DockInfraRed>>(this, "dock_ir");
+      message_filters::Subscriber<kobuki_ros_interfaces::msg::DockInfraRed>>(this, "/dock_ir", rmw_qos_profile_sensor_data);
     core_sub_ = std::make_unique<
       message_filters::Subscriber<kobuki_ros_interfaces::msg::SensorState>>(this, "core");
 
     sync_ = std::make_unique<message_filters::Synchronizer<SyncPolicy>>(
       SyncPolicy(10),
       *odom_sub_,
-      *core_sub_,
+      // *core_sub_,
       *ir_sub_
     );
 
     sync_->registerCallback(std::bind(
-      &AutoDockingROS::sync_callback, this,
-      std::placeholders::_1,
-      std::placeholders::_2,
-      std::placeholders::_3
+      &AutoDockingROS::sync_callback, this
+      , std::placeholders::_1
+      , std::placeholders::_2
+      // , std::placeholders::_3
     ));
     if (!dock_.init()) {
       RCLCPP_ERROR(get_logger(), "Fuck");
@@ -73,9 +74,10 @@ public:
 
   void sync_callback(
     std::shared_ptr<nav_msgs::msg::Odometry const> odom,
-    std::shared_ptr<kobuki_ros_interfaces::msg::SensorState const> core,
+    // std::shared_ptr<kobuki_ros_interfaces::msg::SensorState const> core,
     std::shared_ptr<kobuki_ros_interfaces::msg::DockInfraRed const> ir)
   {
+    RCLCPP_INFO(get_logger(), "Get MESAGE");
     if (!dock_.isEnabled()) {
       return;
     }
@@ -94,7 +96,8 @@ public:
     pose[2] = y;
 
     //update
-    dock_.update(ir->data, core->bumper, core->charger, pose);
+    dock_.update(ir->data, 0, 0, pose);
+    // dock_.update(ir->data, core->bumper, core->charger, pose);
     RCLCPP_INFO(get_logger(), dock_.getDebugStream());
 
     //publish command velocity

@@ -7,6 +7,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(kobuki_core REQUIRED)
 find_package(kobuki_ros_interfaces REQUIRED)
 find_package(message_filters REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(orocos_kdl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
@@ -22,6 +23,7 @@ ament_target_dependencies(kobuki_auto_docking_ros
   kobuki_core
   kobuki_ros_interfaces
   message_filters
+  nav_msgs
   orocos_kdl
   rclcpp
   rclcpp_components
@@ -32,7 +34,10 @@ rclcpp_components_register_nodes(kobuki_auto_docking_ros
   "kobuki::AutoDockingROS")
 
 install(TARGETS kobuki_auto_docking_ros
-  DESTINATION lib/${project_name})
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
