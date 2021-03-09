@@ -3,12 +3,14 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "kdl/frames.hpp"
 #include "kobuki_core/dock_drive.hpp"
+#include "kobuki_ros_interfaces/action/auto_docking.hpp"
 #include "kobuki_ros_interfaces/msg/dock_infra_red.hpp"
 #include "kobuki_ros_interfaces/msg/sensor_state.hpp"
 #include "message_filters/subscriber.h"
 #include "message_filters/synchronizer.h"
 #include "message_filters/sync_policies/approximate_time.h"
 #include "nav_msgs/msg/odometry.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
@@ -30,9 +32,12 @@ public:
   AutoDockingROS(const rclcpp::NodeOptions & options)
     : rclcpp::Node("auto_docking_ros", options)
   {
+    using namespace std::placeholders;
+
     RCLCPP_WARN(get_logger(), "Started autodock node");
     double min_abs_v = 0.01;
     double min_abs_w = 0.1;
+    // TODO: params
     // if (nh.getParam("min_abs_v", min_abs_v) == true)
     dock_.setMinAbsV(min_abs_v);
     // if (nh.getParam("min_abs_w", min_abs_w) == true)
@@ -55,16 +60,21 @@ public:
       *ir_sub_
     );
 
-    sync_->registerCallback(std::bind(
-      &AutoDockingROS::sync_callback, this
-      , std::placeholders::_1
-      , std::placeholders::_2
-      // , std::placeholders::_3
-    ));
+    sync_->registerCallback(std::bind(&AutoDockingROS::sync_callback, this, _1, _2));
+    // , _3
+
+
+    this->action_server_ = rclcpp_action::create_server<
+      kobuki_ros_interfaces::action::AutoDocking>(
+        this,
+        "auto_dock",
+        std::bind(&AutoDockingROS::handle_goal, this, _1, _2),
+        std::bind(&AutoDockingROS::handle_cancel, this, _1),
+        std::bind(&AutoDockingROS::handle_accepted, this, _1));
+
     if (!dock_.init()) {
-      RCLCPP_ERROR(get_logger(), "Fuck");
+      RCLCPP_ERROR(get_logger(), "Unable to initialize docking algorithm.");
     }
-    dock_.enable();
   }
 
 
@@ -77,7 +87,6 @@ public:
     // std::shared_ptr<kobuki_ros_interfaces::msg::SensorState const> core,
     std::shared_ptr<kobuki_ros_interfaces::msg::DockInfraRed const> ir)
   {
-    RCLCPP_INFO(get_logger(), "Get MESAGE");
     if (!dock_.isEnabled()) {
       return;
     }
@@ -115,10 +124,46 @@ public:
 
   }
 
+  using AutoDocking = kobuki_ros_interfaces::action::AutoDocking;
+  using GoalHandleAutoDocking = rclcpp_action::ServerGoalHandle<AutoDocking>;
+
 private:
 
+  rclcpp_action::GoalResponse handle_goal(
+    const rclcpp_action::GoalUUID & uuid,
+    std::shared_ptr<const AutoDocking::Goal> goal)
+  {
+    (void)uuid;
+    (void)goal;
+
+    if (dock_.isEnabled()) {
+      RCLCPP_INFO(this->get_logger(), "Rejected: dock drive is already enabled");
+      return rclcpp_action::GoalResponse::REJECT;
+    }
+
+    RCLCPP_INFO(this->get_logger(), "Received New goal received and accepted.");
+    return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+  }
+
+  rclcpp_action::CancelResponse handle_cancel(
+    const std::shared_ptr<GoalHandleAutoDocking> goal_handle)
+  {
+    (void)goal_handle;
+    RCLCPP_INFO(this->get_logger(), "Received request to cancel goal");
+    dock_.disable();
+    return rclcpp_action::CancelResponse::ACCEPT;
+  }
+
+  void handle_accepted(const std::shared_ptr<GoalHandleAutoDocking> goal_handle)
+  {
+    (void)goal_handle;
+    dock_.enable();
+  }
 
   DockDrive dock_;
+
+  rclcpp_action::Server<kobuki_ros_interfaces::action::AutoDocking>::SharedPtr action_server_;
+
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
   std::unique_ptr<message_filters::Subscriber<nav_msgs::msg::Odometry>> odom_sub_;
   std::unique_ptr<message_filters::Subscriber<kobuki_ros_interfaces::msg::DockInfraRed>> ir_sub_;

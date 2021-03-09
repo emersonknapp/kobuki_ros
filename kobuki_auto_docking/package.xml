@@ -23,6 +23,7 @@
   <depend>orocos_kdl</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
   <depend>rclcpp_components</depend>
   <depend>tf2_kdl</depend>
 
