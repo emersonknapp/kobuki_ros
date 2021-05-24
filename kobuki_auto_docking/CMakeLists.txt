@@ -30,8 +30,9 @@ ament_target_dependencies(kobuki_auto_docking_ros
   tf2_kdl
 )
 
-rclcpp_components_register_nodes(kobuki_auto_docking_ros
-  "kobuki::AutoDockingROS")
+rclcpp_components_register_node(kobuki_auto_docking_ros
+  PLUGIN "kobuki::AutoDockingROS"
+  EXECUTABLE kobuki_auto_docking_ros)
 
 install(TARGETS kobuki_auto_docking_ros
   ARCHIVE DESTINATION lib
