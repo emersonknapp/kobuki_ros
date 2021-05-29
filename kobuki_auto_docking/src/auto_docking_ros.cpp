@@ -33,25 +33,31 @@ public:
     : rclcpp::Node("auto_docking_ros", options)
   {
     using namespace std::placeholders;
+    RCLCPP_DEBUG(get_logger(), "Started autodock node");
 
-    RCLCPP_WARN(get_logger(), "Started autodock node");
-    double min_abs_v = 0.01;
-    double min_abs_w = 0.1;
-    // TODO: params
-    // if (nh.getParam("min_abs_v", min_abs_v) == true)
-    dock_.setMinAbsV(min_abs_v);
-    // if (nh.getParam("min_abs_w", min_abs_w) == true)
-    dock_.setMinAbsW(min_abs_w);
+    declare_parameter<double>("min_abs_v", 0.01);
+    declare_parameter<double>("min_abs_w", 0.1);
+
+    {
+      double min_abs_v;
+      double min_abs_w;
+      get_parameter("min_abs_v", min_abs_v);
+      get_parameter("min_abs_w", min_abs_w);
+      dock_.setMinAbsV(min_abs_v);
+      dock_.setMinAbsW(min_abs_w);
+    }
 
     cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>(
-      "/simulation/cmd_vel", 10);
+      "/cmd_vel", 10);
 
     odom_sub_ = std::make_unique<message_filters::Subscriber<nav_msgs::msg::Odometry>>(
-      this, "/simulation/odom", rmw_qos_profile_sensor_data);
+      this, "/odom", rmw_qos_profile_sensor_data);
     ir_sub_ = std::make_unique<
-      message_filters::Subscriber<kobuki_ros_interfaces::msg::DockInfraRed>>(this, "/dock_ir", rmw_qos_profile_sensor_data);
+      message_filters::Subscriber<kobuki_ros_interfaces::msg::DockInfraRed>>(
+        this, "/dock_ir", rmw_qos_profile_sensor_data);
     core_sub_ = std::make_unique<
-      message_filters::Subscriber<kobuki_ros_interfaces::msg::SensorState>>(this, "core");
+      message_filters::Subscriber<kobuki_ros_interfaces::msg::SensorState>>(
+        this, "core");
 
     sync_ = std::make_unique<message_filters::Synchronizer<SyncPolicy>>(
       SyncPolicy(10),
