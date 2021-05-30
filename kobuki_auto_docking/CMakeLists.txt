@@ -3,6 +3,7 @@ project(kobuki_auto_docking)
 
 find_package(ament_cmake REQUIRED)
 find_package(ecl_linear_algebra REQUIRED)
+find_package(gazebo_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(kobuki_core REQUIRED)
 find_package(kobuki_ros_interfaces REQUIRED)
@@ -11,10 +12,12 @@ find_package(nav_msgs REQUIRED)
 find_package(orocos_kdl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(tf2 REQUIRED)
 find_package(tf2_kdl REQUIRED)
 
 add_library(kobuki_auto_docking_ros SHARED
-  src/auto_docking_ros.cpp)
+  src/auto_docking_ros.cpp
+)
 target_include_directories(kobuki_auto_docking_ros PUBLIC
   include/)
 ament_target_dependencies(kobuki_auto_docking_ros
@@ -32,9 +35,27 @@ ament_target_dependencies(kobuki_auto_docking_ros
 
 rclcpp_components_register_node(kobuki_auto_docking_ros
   PLUGIN "kobuki::AutoDockingROS"
-  EXECUTABLE kobuki_auto_docking_ros)
+  EXECUTABLE kobuki_auto_docking_node)
 
-install(TARGETS kobuki_auto_docking_ros
+add_library(kobuki_sensor_state_agg SHARED
+  src/sensor_state_agg.cpp)
+target_include_directories(kobuki_sensor_state_agg PUBLIC
+  include/)
+ament_target_dependencies(kobuki_sensor_state_agg
+  gazebo_msgs
+  geometry_msgs
+  kobuki_ros_interfaces
+  nav_msgs
+  rclcpp
+  rclcpp_components
+  tf2
+)
+
+rclcpp_components_register_node(kobuki_sensor_state_agg
+  PLUGIN "kobuki::SensorStateAggregator"
+  EXECUTABLE kobuki_sensor_state_agg_node)
+
+install(TARGETS kobuki_auto_docking_ros kobuki_sensor_state_agg
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin

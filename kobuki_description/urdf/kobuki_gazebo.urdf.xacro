@@ -2,6 +2,10 @@
 
 <robot name="kobuki_sim" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:macro name="kobuki_sim">
+    <gazebo reference="bumper_joint">
+      <preserveFixedJoint>true</preserveFixedJoint>
+    </gazebo>
+
 	  <gazebo reference="wheel_left_link">
 	    <mu1>1.0</mu1>
 	    <mu2>1.0</mu2>
@@ -38,15 +42,17 @@
 	    <maxVel>1.0</maxVel>
 	  </gazebo>
 
-	  <gazebo reference="base_link">
+	  <gazebo reference="bumper_link">
 	    <mu1>0.3</mu1>
 	    <mu2>0.3</mu2>
 	    <sensor type="contact" name="bumpers">
+	      <plugin name="gazebo_ros_bumper" filename="libgazebo_ros_bumper.so">
+	      </plugin>
 	      <always_on>1</always_on>
-	      <update_rate>50.0</update_rate>
+	      <update_rate>10.0</update_rate>
 	      <visualize>true</visualize>
 	      <contact>
-	        <collision>base_footprint_fixed_joint_lump__base_collision</collision>
+	        <collision>bumper_link_fixed_joint_lump__bumper_collision</collision>
 	      </contact>
 	    </sensor>
 	  </gazebo>
@@ -153,6 +159,7 @@
           <output_type>sensor_msgs/msg/Imu</output_type>
           <body_name>gyro_link</body_name>
           <frame_name>gyro_link</frame_name>
+          <initial_orientation_as_reference>false</initial_orientation_as_reference>
         </plugin>
         <always_on>true</always_on>
         <update_rate>50</update_rate>
