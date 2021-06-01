@@ -57,6 +57,32 @@
 	    </sensor>
 	  </gazebo>
 
+    <gazebo reference="charge_pad_left_joint">
+      <preserveFixedJoint>true</preserveFixedJoint>
+    </gazebo>
+    <gazebo reference="charge_pad_left_link">
+      <collision>
+        <surface>
+          <contact>
+            <collide_without_contact>true</collide_without_contact>
+          </contact>
+        </surface>
+      </collision>
+    </gazebo>
+
+    <gazebo reference="charge_pad_right_joint">
+      <preserveFixedJoint>true</preserveFixedJoint>
+    </gazebo>
+    <gazebo reference="charge_pad_right_link">
+      <collision>
+        <surface>
+          <contact>
+            <collide_without_contact>true</collide_without_contact>
+          </contact>
+        </surface>
+      </collision>
+    </gazebo>
+
 	  <gazebo reference="cliff_sensor_left_link">
 	    <sensor type="ray" name="cliff_sensor_left">
 	      <always_on>true</always_on>
